@@ -1,0 +1,24 @@
+* {
+    box-sizing: border-box;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 1rem;
+}
+
+button#toggle-table-button {
+    margin-bottom: 1rem;
+}
+
+table#build {
+    border-collapse: collapse;
+}
+
+table#build td,
+table#build th {
+    padding: 0.25rem 0.5rem;
+
+    border: 1px solid black;
+}
+
+table#build tr:nth-child(odd) {
+    background-color: lightgrey;
+}
