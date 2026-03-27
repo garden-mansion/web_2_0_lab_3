@@ -19,7 +19,7 @@ function createArrGraph(data, key) {
 
 function drawGraph(data) {
   // значения по оси ОХ    
-  const keyX = "Страна";
+  const keyX = "Год";
 
   // создаем массив для построения графика
   let arrGraph = createArrGraph(data, keyX);
@@ -39,7 +39,7 @@ function drawGraph(data) {
   const [scX, scY] = createAxis(svg, arrGraph, attr_area);
 
   // рисуем график
-  createChart(svg, arrGraph, scX, scY, attr_area, "red")
+  createChart(svg, arrGraph, scX, scY, attr_area, "red", "blue")
 }
 
 function createAxis(svg, data, attr_area) {
@@ -47,10 +47,14 @@ function createAxis(svg, data, attr_area) {
   // максимальное и минимальное значение и максимальных высот по каждой стране
   const [min, max] = d3.extent(data.map(d => d.values[1]));
 
+  // сортируем года по возрастанию
+  const dataSorted = Array.from(data);
+  dataSorted.sort((a, b) => a.labelX - b.labelX);
+
   // функция интерполяции значений на оси
   // по оси ОХ текстовые значения
   const scaleX = d3.scaleBand()
-    .domain(data.map(d => d.labelX))
+    .domain(dataSorted.map(d => d.labelX))
     .range([0, attr_area.width - 2 * attr_area.marginX]);
 
   const scaleY = d3.scaleLinear()
@@ -79,17 +83,29 @@ function createAxis(svg, data, attr_area) {
   return [scaleX, scaleY]
 }
 
-function createChart(svg, data, scaleX, scaleY, attr_area, color) {
+function createChart(svg, data, scaleX, scaleY, attr_area, colorMax, colorMin) {
   const r = 4;
 
+  // Отображение максимальных 
   svg.selectAll(".dot")
-      .data(data)
-      .enter()
-      .append("circle")
-      .attr("r", r)
-      .attr("cx", d => scaleX(d.labelX) + scaleX.bandwidth() / 2)
-      .attr("cy", d => scaleY(d.values[1]))
-      .attr("transform", `translate(${attr_area.marginX}, ${attr_area.marginY})`)
-      .style("fill", color)
+    .data(data)
+    .enter()
+    .append("circle")
+    .attr("r", r)
+    .attr("cx", d => scaleX(d.labelX) + scaleX.bandwidth() / 2)
+    .attr("cy", d => scaleY(d.values[1]))
+    .attr("transform", `translate(${attr_area.marginX}, ${attr_area.marginY})`)
+    .style("fill", colorMax)
+
+  // отображение минимальных
+  svg.selectAll(".dot")
+    .data(data)
+    .enter()
+    .append("circle")
+    .attr("r", r)
+    .attr("cx", d => scaleX(d.labelX) + scaleX.bandwidth() / 2)
+    .attr("cy", d => scaleY(d.values[0] + 4))
+    .attr("transform", `translate(${attr_area.marginX}, ${attr_area.marginY})`)
+    .style("fill", colorMin)
 }
 

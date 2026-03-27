@@ -14,6 +14,42 @@
 <body>
   <h3>Список самых высоких зданий</h3>
 
+  <form action="#" id="chart-settings">
+    <p>Значение по оси OX</p>
+
+    <p>
+      <label for="country">Страна</label>
+      <input type="radio" name="ox-value" id="country" value="country">
+    </p>
+
+    <p>
+      <label for="year">Год</label>
+      <input type="radio" name="ox-value" id="year" value="year">
+    </p>
+
+    <p>Значение по оси OY</p>
+
+    <p>
+      <label for="max-height">Максимальная высота</label>
+      <input type="checkbox" name="oy-value" id="max-height" value="max-height">
+    </p>
+
+    <p>
+      <label for="min-height">Минимальная высота</label>
+      <input type="checkbox" name="oy-value" id="min-height" value="min-height">
+    </p>
+
+    <p>
+      <label for="chart-type">Тип графика</label>
+      <select name="chart-type" id="chart-type">
+        <option value="dot-chart">Точечная диаграмма</option>
+        <option value="bar-chart">Гистограмма</option>
+      </select>
+    </p>
+
+    <button type="submit">Построить</button>
+  </form>
+
   <svg></svg>
 
   <button id="toggle-table-button">Скрыть таблицу</button>
