@@ -5,6 +5,7 @@
 }
 
 button#toggle-table-button {
+    display: block;
     margin-bottom: 1rem;
 }
 
@@ -21,4 +22,22 @@ table#build th {
 
 table#build tr:nth-child(odd) {
     background-color: lightgrey;
+}
+
+svg {
+    width: 800px;
+    height: 400px;
+    margin-bottom: 2rem;
+}
+
+svg text {
+    font-size: 8px;
+    font-family: 'Courier New', Courier, monospace;
+}
+
+svg path,
+line {
+    fill: none;
+    stroke: #333333;
+    width: 1px;
 }

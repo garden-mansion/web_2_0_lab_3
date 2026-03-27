@@ -7,7 +7,6 @@ document.addEventListener("DOMContentLoaded", function() {
 
   toggleTableButton.node().addEventListener('click', () => {
     isTableShown = !isTableShown;
-    console.log('in event listener', isTableShown)
 
     if (isTableShown) {
       toggleTableButton.node().innerHTML = 'Скрыть таблицу';
@@ -16,6 +15,7 @@ document.addEventListener("DOMContentLoaded", function() {
       toggleTableButton.node().innerHTML = 'Показать таблицу';
       removeTableRows('build');
     }
+  });
 
-  })
+  drawGraph(buildings);
 })
