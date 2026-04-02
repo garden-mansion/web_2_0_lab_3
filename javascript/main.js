@@ -1,6 +1,6 @@
 let isTableShown = true;
 
-document.addEventListener("DOMContentLoaded", function() {
+document.addEventListener("DOMContentLoaded", function () {
   showTable('build', buildings);
 
   const toggleTableButton = d3.select('#toggle-table-button');
@@ -17,5 +17,12 @@ document.addEventListener("DOMContentLoaded", function() {
     }
   });
 
-  drawGraph(buildings);
+  const dataForm = d3.select('form#chart-settings').node();
+
+  const drawGraphButton = d3.select('form#chart-settings>button[type="submit"]').node();
+
+  drawGraphButton.addEventListener('click', (event) => {
+    event.preventDefault();
+    drawGraph(buildings, dataForm);
+  })
 })

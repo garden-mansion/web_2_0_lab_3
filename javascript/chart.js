@@ -17,12 +17,23 @@ function createArrGraph(data, key) {
   return arrGraph;
 }
 
-function drawGraph(data) {
+function drawGraph(data, dataForm) {
+  const formData = new FormData(dataForm)
+
   // значения по оси ОХ    
-  const keyX = "Год";
+  // const keyX = "Год";
+  // const dataFormOxValue = dataForm['ox-value'].value;
+  const dataFormOxValue = formData.get('ox-value');
+
+  const keyX = dataFormOxValue === 'year' ? 'Год' : 'Страна';
 
   // создаем массив для построения графика
   let arrGraph = createArrGraph(data, keyX);
+
+  /* если выбран Год, то отсортировать массив по labelX */
+  if (keyX === 'Год') {
+    arrGraph.sort((a, b) => a.labelX - b.labelX)
+  }
 
   const svg = d3.select("svg")
   svg.selectAll('*').remove();
@@ -35,30 +46,58 @@ function drawGraph(data) {
     marginY: 50
   }
 
-  // создаем шкалы преобразования и выводим оси
-  const [scX, scY] = createAxis(svg, arrGraph, attr_area);
+  // const oyValueArray = [...dataForm['oy-value']].map(input => input.value);
+  const oyValueArray = formData.getAll('oy-value');
 
-  // рисуем график
-  createChart(svg, arrGraph, scX, scY, attr_area, "red", "blue")
+  // создаем шкалы преобразования и выводим оси
+  /* 
+  добавить параметр, который указывает какие графики выводить
+  минимальные значения, максимальные значения или оба 
+  */
+  const [scX, scY] = createAxis(svg, arrGraph, attr_area, oyValueArray);
+
+  // рисуем график/ графики
+  /* добавить параметр, какой именно график рисуем */
+  /* рисуем график с минимальными значениями, если это необходимо */
+  if (oyValueArray.includes('min-height')) {
+    createChart(svg, arrGraph, scX, scY, attr_area, 'blue', 'min');
+  }
+
+  /* рисуем график с максимальными значениями, если это необходимо */
+  if (oyValueArray.includes('max-height')) {
+    createChart(svg, arrGraph, scX, scY, attr_area, "red", 'max')
+  }
 }
 
-function createAxis(svg, data, attr_area) {
+function createAxis(svg, data, attr_area, oyValueArray) {
   // находим интервал значений, которые нужно отложить по оси OY 
   // максимальное и минимальное значение и максимальных высот по каждой стране
   const [min, max] = d3.extent(data.map(d => d.values[1]));
 
   // сортируем года по возрастанию
-  const dataSorted = Array.from(data);
-  dataSorted.sort((a, b) => a.labelX - b.labelX);
+  // const dataSorted = Array.from(data);
+  // dataSorted.sort((a, b) => a.labelX - b.labelX);
 
   // функция интерполяции значений на оси
   // по оси ОХ текстовые значения
   const scaleX = d3.scaleBand()
-    .domain(dataSorted.map(d => d.labelX))
+    .domain(data.map(d => d.labelX))
     .range([0, attr_area.width - 2 * attr_area.marginX]);
 
+
+  let scaleYDomain = [];
+
+  if (oyValueArray.includes('min-height')) {
+    scaleYDomain.push(min * 0.85);
+  }
+
+  if (oyValueArray.includes('max-height')) {
+    scaleYDomain.push(max * 1.1);
+  }
+
+
   const scaleY = d3.scaleLinear()
-    .domain([min * 0.85, max * 1.1])
+    .domain(scaleYDomain)
     .range([attr_area.height - 2 * attr_area.marginY, 0]);
 
   // создание осей
@@ -83,29 +122,32 @@ function createAxis(svg, data, attr_area) {
   return [scaleX, scaleY]
 }
 
-function createChart(svg, data, scaleX, scaleY, attr_area, colorMax, colorMin) {
+// createChart(svg, arrGraph, scX, scY, attr_area, "red", 'max')
+function createChart(svg, data, scaleX, scaleY, attr_area, color, type) {
   const r = 4;
 
-  // Отображение максимальных 
-  svg.selectAll(".dot")
-    .data(data)
-    .enter()
-    .append("circle")
-    .attr("r", r)
-    .attr("cx", d => scaleX(d.labelX) + scaleX.bandwidth() / 2)
-    .attr("cy", d => scaleY(d.values[1]))
-    .attr("transform", `translate(${attr_area.marginX}, ${attr_area.marginY})`)
-    .style("fill", colorMax)
-
-  // отображение минимальных
-  svg.selectAll(".dot")
-    .data(data)
-    .enter()
-    .append("circle")
-    .attr("r", r)
-    .attr("cx", d => scaleX(d.labelX) + scaleX.bandwidth() / 2)
-    .attr("cy", d => scaleY(d.values[0] + 4))
-    .attr("transform", `translate(${attr_area.marginX}, ${attr_area.marginY})`)
-    .style("fill", colorMin)
+  if (type === 'max') {
+    // Отображение максимальных 
+    svg.selectAll(".dot")
+      .data(data)
+      .enter()
+      .append("circle")
+      .attr("r", r)
+      .attr("cx", d => scaleX(d.labelX) + scaleX.bandwidth() / 2)
+      .attr("cy", d => scaleY(d.values[1]))
+      .attr("transform", `translate(${attr_area.marginX}, ${attr_area.marginY})`)
+      .style("fill", color)
+  } else if (type === 'min') {
+    // отображение минимальных
+    svg.selectAll(".dot")
+      .data(data)
+      .enter()
+      .append("circle")
+      .attr("r", r)
+      .attr("cx", d => scaleX(d.labelX) + scaleX.bandwidth() / 2)
+      .attr("cy", d => scaleY(d.values[0] + 4))
+      .attr("transform", `translate(${attr_area.marginX}, ${attr_area.marginY})`)
+      .style("fill", color)
+  }
 }
 
