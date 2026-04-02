@@ -1,9 +1,4 @@
-// Входные данные:
-//   data - исходный массив (например, buildings)
-//   key - поле, по которому осуществляется группировка
-
 function createArrGraph(data, key) {
-
   const groupObj = d3.group(data, d => d[key]);
 
   let arrGraph = [];
@@ -20,17 +15,11 @@ function createArrGraph(data, key) {
 function drawGraph(data, dataForm) {
   const formData = new FormData(dataForm)
 
-  // значения по оси ОХ    
-  // const keyX = "Год";
-  // const dataFormOxValue = dataForm['ox-value'].value;
   const dataFormOxValue = formData.get('ox-value');
-
   const keyX = dataFormOxValue === 'year' ? 'Год' : 'Страна';
 
-  // создаем массив для построения графика
   let arrGraph = createArrGraph(data, keyX);
 
-  /* если выбран Год, то отсортировать массив по labelX */
   if (keyX === 'Год') {
     arrGraph.sort((a, b) => a.labelX - b.labelX)
   }
@@ -38,7 +27,6 @@ function drawGraph(data, dataForm) {
   const svg = d3.select("svg")
   svg.selectAll('*').remove();
 
-  // создаем словарь с атрибутами области вывода графика
   const attr_area = {
     width: parseFloat(svg.style('width')),
     height: parseFloat(svg.style('height')),
@@ -46,26 +34,24 @@ function drawGraph(data, dataForm) {
     marginY: 50
   }
 
-  // const oyValueArray = [...dataForm['oy-value']].map(input => input.value);
   const oyValueArray = formData.getAll('oy-value');
 
-  // создаем шкалы преобразования и выводим оси
-  /* 
-  добавить параметр, который указывает какие графики выводить
-  минимальные значения, максимальные значения или оба 
-  */
+  const chartType = formData.get('chart-type');
+
   const [scX, scY] = createAxis(svg, arrGraph, attr_area, oyValueArray);
 
-  // рисуем график/ графики
-  /* добавить параметр, какой именно график рисуем */
-  /* рисуем график с минимальными значениями, если это необходимо */
-  if (oyValueArray.includes('min-height')) {
-    createChart(svg, arrGraph, scX, scY, attr_area, 'blue', 'min');
+  // количество данных,нужно для расчёта ширины столбцов гистограмы
+  const numSeries = oyValueArray.length;
+  let seriesIndex = 0;
+
+  if (oyValueArray.includes('max-height')) {
+    createChart(svg, arrGraph, scX, scY, attr_area, "red", 'max', chartType, numSeries, seriesIndex);
+    seriesIndex++;
   }
 
-  /* рисуем график с максимальными значениями, если это необходимо */
-  if (oyValueArray.includes('max-height')) {
-    createChart(svg, arrGraph, scX, scY, attr_area, "red", 'max')
+  if (oyValueArray.includes('min-height')) {
+    createChart(svg, arrGraph, scX, scY, attr_area, 'blue', 'min', chartType, numSeries, seriesIndex);
+    seriesIndex++;
   }
 }
 
@@ -110,33 +96,58 @@ function createAxis(svg, data, attr_area, oyValueArray) {
   return [scaleX, scaleY];
 }
 
-// createChart(svg, arrGraph, scX, scY, attr_area, "red", 'max')
-function createChart(svg, data, scaleX, scaleY, attr_area, color, type) {
-  const r = 4;
-
-  if (type === 'max') {
-    // Отображение максимальных 
-    svg.selectAll(".dot")
-      .data(data)
-      .enter()
-      .append("circle")
-      .attr("r", r)
-      .attr("cx", d => scaleX(d.labelX) + scaleX.bandwidth() / 2)
-      .attr("cy", d => scaleY(d.values[1]))
-      .attr("transform", `translate(${attr_area.marginX}, ${attr_area.marginY})`)
-      .style("fill", color)
-  } else if (type === 'min') {
-    // отображение минимальных
-    svg.selectAll(".dot")
-      .data(data)
-      .enter()
-      .append("circle")
-      .attr("r", r)
-      .attr("cx", d => scaleX(d.labelX) + scaleX.bandwidth() / 2)
-      .attr("cy", d => scaleY(d.values[0] + 4))
-      .attr("transform", `translate(${attr_area.marginX}, ${attr_area.marginY})`)
-      .style("fill", color)
+function createChart(svg, data, scaleX, scaleY, attr_area, color, type, chartType, numSeries, seriesIndex) {
+  if (chartType === 'bar-chart') {
+    createBarChart(svg, data, scaleX, scaleY, attr_area, color, type, numSeries, seriesIndex);
+  } else {
+    createDotChart(svg, data, scaleX, scaleY, attr_area, color, type);
   }
+}
+
+function createDotChart(svg, data, scaleX, scaleY, attr_area, color, type) {
+  const r = 4;
+  const valueIndex = type === 'max' ? 1 : 0;
+
+  svg.selectAll(`.dot-${type}`)
+    .data(data)
+    .enter()
+    .append("circle")
+    .attr("class", `dot-${type}`)
+    .attr("r", r)
+    .attr("cx", d => scaleX(d.labelX) + scaleX.bandwidth() / 2)
+    .attr("cy", d => scaleY(d.values[valueIndex]))
+    .attr("transform", `translate(${attr_area.marginX}, ${attr_area.marginY})`)
+    .style("fill", color);
+}
+
+function createBarChart(svg, data, scaleX, scaleY, attr_area, color, type, numSeries, seriesIndex) {
+  // Отступ группы от краёв полосы (доля от bandwidth)
+  const groupPadding = 0.3;
+  // Отступ между столбцами внутри группы (в пикселях)
+  const barGap = 1;
+
+  // Доступная ширина для группы столбцов (с учётом отступов по краям)
+  const groupWidth = scaleX.bandwidth() * (1 - groupPadding);
+  // Смещение группы от начала полосы (центрирование)
+  const groupOffset = (scaleX.bandwidth() - groupWidth) / 2;
+
+  // Ширина одного столбца с учётом зазоров между ними
+  const barWidth = (groupWidth - barGap * (numSeries - 1)) / numSeries;
+
+  const chartHeight = attr_area.height - 2 * attr_area.marginY;
+  const valueIndex = type === 'max' ? 1 : 0;
+
+  svg.selectAll(`.bar-${type}`)
+    .data(data)
+    .enter()
+    .append("rect")
+    .attr("class", `bar-${type}`)
+    .attr("x", d => scaleX(d.labelX) + groupOffset + seriesIndex * (barWidth + barGap))
+    .attr("y", d => scaleY(d.values[valueIndex]))
+    .attr("width", barWidth)
+    .attr("height", d => chartHeight - scaleY(d.values[valueIndex]))
+    .attr("transform", `translate(${attr_area.marginX}, ${attr_area.marginY})`)
+    .style("fill", color);
 }
 
 function isChartFormValid(dataForm) {
