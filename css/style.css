@@ -41,3 +41,11 @@ line {
     stroke: #333333;
     width: 1px;
 }
+
+.oy-value-error {
+    color: red;
+}
+
+.oy-value-error_display_none {
+    display: none;
+}

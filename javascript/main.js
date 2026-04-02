@@ -23,6 +23,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
   drawGraphButton.addEventListener('click', (event) => {
     event.preventDefault();
-    drawGraph(buildings, dataForm);
+    if (!isChartFormValid(dataForm)) {
+      showErrorInChartForm()
+    } else {
+      hideErrorInChartForm();
+      drawGraph(buildings, dataForm)
+    }
   })
 })

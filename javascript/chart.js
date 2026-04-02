@@ -139,3 +139,29 @@ function createChart(svg, data, scaleX, scaleY, attr_area, color, type) {
   }
 }
 
+function isChartFormValid(dataForm) {
+  const formData = new FormData(dataForm);
+
+  const oyValues = formData.getAll('oy-value');
+
+  if (!oyValues.length) {
+    return false;
+  }
+
+  return true;
+}
+
+function showErrorInChartForm() {
+  const errorLabel = d3.select('.oy-value-error').node();
+
+  errorLabel.classList.remove('oy-value-error_display_none')
+}
+
+function hideErrorInChartForm() {
+  const errorLabel = d3.select('.oy-value-error').node();
+
+  if (!errorLabel.classList.contains('oy-value-error_display_none')) {
+    errorLabel.classList.add('oy-value-error_display_none')
+  }
+}
+
