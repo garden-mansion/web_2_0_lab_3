@@ -70,46 +70,34 @@ function drawGraph(data, dataForm) {
 }
 
 function createAxis(svg, data, attr_area, oyValueArray) {
-  // находим интервал значений, которые нужно отложить по оси OY 
-  // максимальное и минимальное значение и максимальных высот по каждой стране
-  const [min, max] = d3.extent(data.map(d => d.values[1]));
+  let allValues = [];
 
-  // сортируем года по возрастанию
-  // const dataSorted = Array.from(data);
-  // dataSorted.sort((a, b) => a.labelX - b.labelX);
+  if (oyValueArray.includes('min-height')) {
+    allValues.push(...data.map(d => d.values[0]));
+  }
 
-  // функция интерполяции значений на оси
-  // по оси ОХ текстовые значения
+  if (oyValueArray.includes('max-height')) {
+    allValues.push(...data.map(d => d.values[1]));
+  }
+
+  const [min, max] = d3.extent(allValues);
+
   const scaleX = d3.scaleBand()
     .domain(data.map(d => d.labelX))
     .range([0, attr_area.width - 2 * attr_area.marginX]);
 
-
-  let scaleYDomain = [];
-
-  if (oyValueArray.includes('min-height')) {
-    scaleYDomain.push(min * 0.85);
-  }
-
-  if (oyValueArray.includes('max-height')) {
-    scaleYDomain.push(max * 1.1);
-  }
-
-
   const scaleY = d3.scaleLinear()
-    .domain(scaleYDomain)
+    .domain([min * 0.85, max * 1.1])
     .range([attr_area.height - 2 * attr_area.marginY, 0]);
 
-  // создание осей
-  const axisX = d3.axisBottom(scaleX); // горизонтальная 
-  const axisY = d3.axisLeft(scaleY); // вертикальная
+  const axisX = d3.axisBottom(scaleX);
+  const axisY = d3.axisLeft(scaleY);
 
-  // отрисовка осей в SVG-элементе
   svg.append("g")
     .attr("transform", `translate(${attr_area.marginX}, 
                                     ${attr_area.height - attr_area.marginY})`)
     .call(axisX)
-    .selectAll("text") // подписи на оси - наклонные
+    .selectAll("text")
     .style("text-anchor", "end")
     .attr("dx", "-.8em")
     .attr("dy", ".15em")
@@ -119,7 +107,7 @@ function createAxis(svg, data, attr_area, oyValueArray) {
     .attr("transform", `translate(${attr_area.marginX}, ${attr_area.marginY})`)
     .call(axisY);
 
-  return [scaleX, scaleY]
+  return [scaleX, scaleY];
 }
 
 // createChart(svg, arrGraph, scX, scY, attr_area, "red", 'max')
